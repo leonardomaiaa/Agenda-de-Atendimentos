@@ -1,4 +1,4 @@
-namespace WinFormsApp1
+namespace AgendaAtendimentos
 {
     internal static class Program
     {
