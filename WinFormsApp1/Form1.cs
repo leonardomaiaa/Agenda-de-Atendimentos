@@ -82,7 +82,7 @@ namespace AgendaAtendimentos
 
             listaAgendamentos.Add(novoAgendamento);
             MessageBox.Show("Agendamento realizado!");
-            
+
             // Atualiza a exibição da agenda caso seja o mesmo dia
             FiltrarAgenda();
         }
@@ -125,6 +125,16 @@ namespace AgendaAtendimentos
                     lstAgendaDia.Items.Add(agendamento);
                 }
             }
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lstServicos_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }
