@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace AgendaAtendimentos
@@ -113,6 +114,9 @@ namespace AgendaAtendimentos
             cmbServicos.DataSource = listaServicos;
         }
 
+        /// <summary>
+        /// Filtra e exibe na lista os agendamentos da data selecionada.
+        /// </summary>
         private void FiltrarAgenda()
         {
             lstAgendaDia.Items.Clear();
@@ -125,6 +129,70 @@ namespace AgendaAtendimentos
                     lstAgendaDia.Items.Add(agendamento);
                 }
             }
+        }
+
+        /// <summary>
+        /// Altera o status do agendamento selecionado na lista.
+        /// </summary>
+        /// <param name="novoStatus">Novo status a ser aplicado.</param>
+        private void AlterarStatusAgendamentoSelecionado(StatusAgendamento novoStatus)
+        {
+            // Verifica se há um agendamento selecionado na lista
+            if (lstAgendaDia.SelectedItem is Agendamento agendamento)
+            {
+                // Altera o status através do método encapsulado
+                agendamento.AlterarStatus(novoStatus);
+                // Atualiza a exibição da agenda
+                FiltrarAgenda();
+            }
+            else
+            {
+                MessageBox.Show("Selecione um agendamento na lista primeiro!");
+            }
+        }
+
+        /// <summary>
+        /// Exibe o menu de contexto apenas se houver um agendamento selecionado,
+        /// e marca o status atual com um check.
+        /// </summary>
+        private void contextMenuStatus_Opening(object sender, CancelEventArgs e)
+        {
+            // Se não houver agendamento selecionado, não abre o menu
+            if (lstAgendaDia.SelectedItem is not Agendamento agendamento)
+            {
+                e.Cancel = true;
+                return;
+            }
+
+            // Atualiza os checks visuais conforme o status atual do agendamento
+            menuStatusAgendado.Checked = agendamento.Status == StatusAgendamento.Agendado;
+            menuStatusConfirmado.Checked = agendamento.Status == StatusAgendamento.Confirmado;
+            menuStatusCancelado.Checked = agendamento.Status == StatusAgendamento.Cancelado;
+            menuStatusConcluido.Checked = agendamento.Status == StatusAgendamento.Concluido;
+        }
+
+        /// <summary>Altera o status do agendamento para Agendado.</summary>
+        private void menuStatusAgendado_Click(object sender, EventArgs e)
+        {
+            AlterarStatusAgendamentoSelecionado(StatusAgendamento.Agendado);
+        }
+
+        /// <summary>Altera o status do agendamento para Confirmado.</summary>
+        private void menuStatusConfirmado_Click(object sender, EventArgs e)
+        {
+            AlterarStatusAgendamentoSelecionado(StatusAgendamento.Confirmado);
+        }
+
+        /// <summary>Altera o status do agendamento para Cancelado.</summary>
+        private void menuStatusCancelado_Click(object sender, EventArgs e)
+        {
+            AlterarStatusAgendamentoSelecionado(StatusAgendamento.Cancelado);
+        }
+
+        /// <summary>Altera o status do agendamento para Concluído.</summary>
+        private void menuStatusConcluido_Click(object sender, EventArgs e)
+        {
+            AlterarStatusAgendamentoSelecionado(StatusAgendamento.Concluido);
         }
 
         private void label2_Click(object sender, EventArgs e)

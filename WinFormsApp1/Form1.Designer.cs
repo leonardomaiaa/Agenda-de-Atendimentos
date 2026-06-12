@@ -17,6 +17,7 @@
 
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             label1 = new Label();
             txtNomeCliente = new TextBox();
             txtTelefoneCliente = new TextBox();
@@ -57,7 +58,7 @@
             txtNomeCliente.Name = "txtNomeCliente";
             txtNomeCliente.Size = new Size(191, 27);
             txtNomeCliente.TabIndex = 1;
-            txtNomeCliente.Text = "o";
+            txtNomeCliente.Text = "";
             // 
             // txtTelefoneCliente
             // 
@@ -244,6 +245,54 @@
             lstAgendaDia.Size = new Size(468, 524);
             lstAgendaDia.TabIndex = 22;
             // 
+            // menuStatusAgendado
+            // 
+            menuStatusAgendado = new ToolStripMenuItem();
+            menuStatusAgendado.Name = "menuStatusAgendado";
+            menuStatusAgendado.Size = new Size(175, 26);
+            menuStatusAgendado.Text = "Agendado";
+            menuStatusAgendado.Click += menuStatusAgendado_Click;
+            // 
+            // menuStatusConfirmado
+            // 
+            menuStatusConfirmado = new ToolStripMenuItem();
+            menuStatusConfirmado.Name = "menuStatusConfirmado";
+            menuStatusConfirmado.Size = new Size(175, 26);
+            menuStatusConfirmado.Text = "Confirmado";
+            menuStatusConfirmado.Click += menuStatusConfirmado_Click;
+            // 
+            // menuStatusCancelado
+            // 
+            menuStatusCancelado = new ToolStripMenuItem();
+            menuStatusCancelado.Name = "menuStatusCancelado";
+            menuStatusCancelado.Size = new Size(175, 26);
+            menuStatusCancelado.Text = "Cancelado";
+            menuStatusCancelado.Click += menuStatusCancelado_Click;
+            // 
+            // menuStatusConcluido
+            // 
+            menuStatusConcluido = new ToolStripMenuItem();
+            menuStatusConcluido.Name = "menuStatusConcluido";
+            menuStatusConcluido.Size = new Size(175, 26);
+            menuStatusConcluido.Text = "Concluído";
+            menuStatusConcluido.Click += menuStatusConcluido_Click;
+            // 
+            // contextMenuStatus
+            // 
+            contextMenuStatus = new ContextMenuStrip(components);
+            contextMenuStatus.Items.AddRange(new ToolStripItem[] {
+                menuStatusAgendado,
+                menuStatusConfirmado,
+                menuStatusCancelado,
+                menuStatusConcluido
+            });
+            contextMenuStatus.Name = "contextMenuStatus";
+            contextMenuStatus.Size = new Size(176, 104);
+            contextMenuStatus.Opening += contextMenuStatus_Opening;
+            // 
+            // Associa o menu de contexto à lista de agendamentos
+            lstAgendaDia.ContextMenuStrip = contextMenuStatus;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -303,5 +352,10 @@
         private DateTimePicker dtpFiltroAgenda;
         private Button btnFiltrar;
         private ListBox lstAgendaDia;
+        private ContextMenuStrip contextMenuStatus;
+        private ToolStripMenuItem menuStatusAgendado;
+        private ToolStripMenuItem menuStatusConfirmado;
+        private ToolStripMenuItem menuStatusCancelado;
+        private ToolStripMenuItem menuStatusConcluido;
     }
 }
