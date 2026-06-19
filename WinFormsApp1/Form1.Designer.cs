@@ -112,7 +112,7 @@
             label2.Size = new Size(124, 20);
             label2.TabIndex = 7;
             label2.Text = "Nome do Serviço";
-            label2.Click += label2_Click;
+
             // 
             // label3
             // 
@@ -152,7 +152,7 @@
             lstServicos.Name = "lstServicos";
             lstServicos.Size = new Size(431, 204);
             lstServicos.TabIndex = 12;
-            lstServicos.SelectedIndexChanged += lstServicos_SelectedIndexChanged;
+
             // 
             // label4
             // 

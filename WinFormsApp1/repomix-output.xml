@@ -1,0 +1,1048 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+agenda_atendimentos.csproj
+Form1.cs
+Form1.Designer.cs
+Form1.resx
+Models/Agendamento.cs
+Models/Cliente.cs
+Models/Servico.cs
+Models/StatusAgendamento.cs
+Program.cs
+reference/briefing-agenda-atendimentos.md
+reference/projeto-rbac-briefing.docx
+reference/README-exemplo.md
+Services/AgendaService.cs
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="agenda_atendimentos.csproj">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
+</file>
+
+<file path="Form1.cs">
+using System.ComponentModel;
+using AgendaAtendimentos.Models;
+using AgendaAtendimentos.Services;
+
+namespace AgendaAtendimentos;
+
+public partial class Form1 : Form
+{
+    private readonly AgendaService _agendaService = new();
+
+    public Form1()
+    {
+        InitializeComponent();
+    }
+
+    private void btnSalvarCliente_Click(object sender, EventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(txtNomeCliente.Text))
+        {
+            MessageBox.Show("Digite o nome do cliente!");
+            return;
+        }
+
+        _agendaService.AdicionarCliente(txtNomeCliente.Text, txtTelefoneCliente.Text);
+        AtualizarListasClientes();
+        txtNomeCliente.Clear();
+        txtTelefoneCliente.Clear();
+    }
+
+    private void btnSalvarServico_Click(object sender, EventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(txtNomeServico.Text) || !decimal.TryParse(txtPrecoServico.Text, out decimal preco))
+        {
+            MessageBox.Show("Preencha o nome e um preço válido!");
+            return;
+        }
+
+        _agendaService.AdicionarServico(txtNomeServico.Text, preco);
+        AtualizarListasServicos();
+        txtNomeServico.Clear();
+        txtPrecoServico.Clear();
+    }
+
+    private void btnAgendar_Click(object sender, EventArgs e)
+    {
+        if (cmbClientes.SelectedItem is not Cliente clienteSelecionado)
+        {
+            MessageBox.Show("Selecione um cliente!");
+            return;
+        }
+
+        if (cmbServicos.SelectedItem is not Servico servicoSelecionado)
+        {
+            MessageBox.Show("Selecione um serviço!");
+            return;
+        }
+
+        _agendaService.Agendar(clienteSelecionado, servicoSelecionado, dtpDataHora.Value);
+        FiltrarAgenda();
+    }
+
+    private void btnFiltrar_Click(object sender, EventArgs e)
+    {
+        FiltrarAgenda();
+    }
+
+    private void AtualizarListasClientes()
+    {
+        lstClientes.DataSource = null;
+        lstClientes.DataSource = _agendaService.Clientes.ToList();
+
+        cmbClientes.DataSource = null;
+        cmbClientes.DataSource = _agendaService.Clientes.ToList();
+    }
+
+    private void AtualizarListasServicos()
+    {
+        lstServicos.DataSource = null;
+        lstServicos.DataSource = _agendaService.Servicos.ToList();
+
+        cmbServicos.DataSource = null;
+        cmbServicos.DataSource = _agendaService.Servicos.ToList();
+    }
+
+    private void FiltrarAgenda()
+    {
+        var agendamentos = _agendaService.FiltrarPorData(dtpFiltroAgenda.Value);
+        lstAgendaDia.DataSource = null;
+        lstAgendaDia.DataSource = agendamentos;
+    }
+
+    private void AlterarStatusAgendamentoSelecionado(StatusAgendamento novoStatus)
+    {
+        if (lstAgendaDia.SelectedItem is Agendamento agendamento)
+        {
+            _agendaService.AlterarStatusAgendamento(agendamento.Id, novoStatus);
+            FiltrarAgenda();
+        }
+        else
+        {
+            MessageBox.Show("Selecione um agendamento na lista primeiro!");
+        }
+    }
+
+    private void contextMenuStatus_Opening(object sender, CancelEventArgs e)
+    {
+        if (lstAgendaDia.SelectedItem is not Agendamento agendamento)
+        {
+            e.Cancel = true;
+            return;
+        }
+
+        menuStatusAgendado.Checked = agendamento.Status == StatusAgendamento.Agendado;
+        menuStatusConfirmado.Checked = agendamento.Status == StatusAgendamento.Confirmado;
+        menuStatusCancelado.Checked = agendamento.Status == StatusAgendamento.Cancelado;
+        menuStatusConcluido.Checked = agendamento.Status == StatusAgendamento.Concluido;
+    }
+
+    private void menuStatusAgendado_Click(object sender, EventArgs e)
+    {
+        AlterarStatusAgendamentoSelecionado(StatusAgendamento.Agendado);
+    }
+
+    private void menuStatusConfirmado_Click(object sender, EventArgs e)
+    {
+        AlterarStatusAgendamentoSelecionado(StatusAgendamento.Confirmado);
+    }
+
+    private void menuStatusCancelado_Click(object sender, EventArgs e)
+    {
+        AlterarStatusAgendamentoSelecionado(StatusAgendamento.Cancelado);
+    }
+
+    private void menuStatusConcluido_Click(object sender, EventArgs e)
+    {
+        AlterarStatusAgendamentoSelecionado(StatusAgendamento.Concluido);
+    }
+}
+</file>
+
+<file path="Form1.Designer.cs">
+namespace AgendaAtendimentos
+{
+    partial class Form1
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        private void InitializeComponent()
+        {
+            components = new System.ComponentModel.Container();
+            label1 = new Label();
+            txtNomeCliente = new TextBox();
+            txtTelefoneCliente = new TextBox();
+            Telefone = new Label();
+            btnSalvarCliente = new Button();
+            lstClientes = new ListBox();
+            btnSalvarServico = new Button();
+            label2 = new Label();
+            label3 = new Label();
+            txtNomeServico = new TextBox();
+            txtPrecoServico = new TextBox();
+            cmbClientes = new ComboBox();
+            lstServicos = new ListBox();
+            label4 = new Label();
+            label5 = new Label();
+            cmbServicos = new ComboBox();
+            label6 = new Label();
+            dtpDataHora = new DateTimePicker();
+            btnAgendar = new Button();
+            label7 = new Label();
+            dtpFiltroAgenda = new DateTimePicker();
+            btnFiltrar = new Button();
+            lstAgendaDia = new ListBox();
+            SuspendLayout();
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(23, 21);
+            label1.Name = "label1";
+            label1.Size = new Size(122, 20);
+            label1.TabIndex = 0;
+            label1.Text = "Nome do Cliente";
+            // 
+            // txtNomeCliente
+            // 
+            txtNomeCliente.Location = new Point(23, 44);
+            txtNomeCliente.Name = "txtNomeCliente";
+            txtNomeCliente.Size = new Size(191, 27);
+            txtNomeCliente.TabIndex = 1;
+            txtNomeCliente.Text = "";
+            // 
+            // txtTelefoneCliente
+            // 
+            txtTelefoneCliente.Location = new Point(23, 116);
+            txtTelefoneCliente.Name = "txtTelefoneCliente";
+            txtTelefoneCliente.Size = new Size(144, 27);
+            txtTelefoneCliente.TabIndex = 2;
+            // 
+            // Telefone
+            // 
+            Telefone.AutoSize = true;
+            Telefone.Location = new Point(23, 93);
+            Telefone.Name = "Telefone";
+            Telefone.Size = new Size(66, 20);
+            Telefone.TabIndex = 3;
+            Telefone.Text = "Telefone";
+            // 
+            // btnSalvarCliente
+            // 
+            btnSalvarCliente.Location = new Point(23, 163);
+            btnSalvarCliente.Name = "btnSalvarCliente";
+            btnSalvarCliente.Size = new Size(94, 29);
+            btnSalvarCliente.TabIndex = 4;
+            btnSalvarCliente.Text = "Salvar Cliente";
+            btnSalvarCliente.UseVisualStyleBackColor = true;
+            btnSalvarCliente.Click += btnSalvarCliente_Click;
+            // 
+            // lstClientes
+            // 
+            lstClientes.FormattingEnabled = true;
+            lstClientes.Location = new Point(237, 28);
+            lstClientes.Name = "lstClientes";
+            lstClientes.Size = new Size(431, 184);
+            lstClientes.TabIndex = 5;
+            // 
+            // btnSalvarServico
+            // 
+            btnSalvarServico.Location = new Point(23, 399);
+            btnSalvarServico.Name = "btnSalvarServico";
+            btnSalvarServico.Size = new Size(94, 29);
+            btnSalvarServico.TabIndex = 6;
+            btnSalvarServico.Text = "Salvar Serviço";
+            btnSalvarServico.UseVisualStyleBackColor = true;
+            btnSalvarServico.Click += btnSalvarServico_Click;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(24, 249);
+            label2.Name = "label2";
+            label2.Size = new Size(124, 20);
+            label2.TabIndex = 7;
+            label2.Text = "Nome do Serviço";
+
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(24, 325);
+            label3.Name = "label3";
+            label3.Size = new Size(46, 20);
+            label3.TabIndex = 8;
+            label3.Text = "Preço";
+            // 
+            // txtNomeServico
+            // 
+            txtNomeServico.Location = new Point(24, 272);
+            txtNomeServico.Name = "txtNomeServico";
+            txtNomeServico.Size = new Size(190, 27);
+            txtNomeServico.TabIndex = 9;
+            // 
+            // txtPrecoServico
+            // 
+            txtPrecoServico.Location = new Point(24, 348);
+            txtPrecoServico.Name = "txtPrecoServico";
+            txtPrecoServico.Size = new Size(143, 27);
+            txtPrecoServico.TabIndex = 10;
+            // 
+            // cmbClientes
+            // 
+            cmbClientes.FormattingEnabled = true;
+            cmbClientes.Location = new Point(16, 544);
+            cmbClientes.Name = "cmbClientes";
+            cmbClientes.Size = new Size(151, 28);
+            cmbClientes.TabIndex = 11;
+            // 
+            // lstServicos
+            // 
+            lstServicos.FormattingEnabled = true;
+            lstServicos.Location = new Point(237, 249);
+            lstServicos.Name = "lstServicos";
+            lstServicos.Size = new Size(431, 204);
+            lstServicos.TabIndex = 12;
+
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(16, 516);
+            label4.Name = "label4";
+            label4.Size = new Size(123, 20);
+            label4.TabIndex = 13;
+            label4.Text = "Selecione Cliente";
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(220, 516);
+            label5.Name = "label5";
+            label5.Size = new Size(125, 20);
+            label5.TabIndex = 14;
+            label5.Text = "Selecione Serviço";
+            // 
+            // cmbServicos
+            // 
+            cmbServicos.FormattingEnabled = true;
+            cmbServicos.Location = new Point(220, 544);
+            cmbServicos.Name = "cmbServicos";
+            cmbServicos.Size = new Size(151, 28);
+            cmbServicos.TabIndex = 15;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(12, 593);
+            label6.Name = "label6";
+            label6.Size = new Size(90, 20);
+            label6.TabIndex = 16;
+            label6.Text = "Data e Hora";
+            // 
+            // dtpDataHora
+            // 
+            dtpDataHora.CustomFormat = "dd/MM/yyyy HH:mm";
+            dtpDataHora.Format = DateTimePickerFormat.Custom;
+            dtpDataHora.Location = new Point(16, 616);
+            dtpDataHora.Name = "dtpDataHora";
+            dtpDataHora.ShowUpDown = true;
+            dtpDataHora.Size = new Size(250, 27);
+            dtpDataHora.TabIndex = 17;
+            // 
+            // btnAgendar
+            // 
+            btnAgendar.Location = new Point(73, 662);
+            btnAgendar.Name = "btnAgendar";
+            btnAgendar.Size = new Size(94, 29);
+            btnAgendar.TabIndex = 18;
+            btnAgendar.Text = "Agendar";
+            btnAgendar.UseVisualStyleBackColor = true;
+            btnAgendar.Click += btnAgendar_Click;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(988, 21);
+            label7.Name = "label7";
+            label7.Size = new Size(108, 20);
+            label7.TabIndex = 19;
+            label7.Text = "Filtrar por data";
+            // 
+            // dtpFiltroAgenda
+            // 
+            dtpFiltroAgenda.CustomFormat = "dd/MM/yyyy";
+            dtpFiltroAgenda.Format = DateTimePickerFormat.Custom;
+            dtpFiltroAgenda.Location = new Point(920, 42);
+            dtpFiltroAgenda.Name = "dtpFiltroAgenda";
+            dtpFiltroAgenda.Size = new Size(250, 27);
+            dtpFiltroAgenda.TabIndex = 20;
+            // 
+            // btnFiltrar
+            // 
+            btnFiltrar.Location = new Point(1002, 75);
+            btnFiltrar.Name = "btnFiltrar";
+            btnFiltrar.Size = new Size(94, 29);
+            btnFiltrar.TabIndex = 21;
+            btnFiltrar.Text = "Ver Agenda";
+            btnFiltrar.UseVisualStyleBackColor = true;
+            btnFiltrar.Click += btnFiltrar_Click;
+            // 
+            // lstAgendaDia
+            // 
+            lstAgendaDia.FormattingEnabled = true;
+            lstAgendaDia.Location = new Point(812, 116);
+            lstAgendaDia.Name = "lstAgendaDia";
+            lstAgendaDia.Size = new Size(468, 524);
+            lstAgendaDia.TabIndex = 22;
+            // 
+            // menuStatusAgendado
+            // 
+            menuStatusAgendado = new ToolStripMenuItem();
+            menuStatusAgendado.Name = "menuStatusAgendado";
+            menuStatusAgendado.Size = new Size(175, 26);
+            menuStatusAgendado.Text = "Agendado";
+            menuStatusAgendado.Click += menuStatusAgendado_Click;
+            // 
+            // menuStatusConfirmado
+            // 
+            menuStatusConfirmado = new ToolStripMenuItem();
+            menuStatusConfirmado.Name = "menuStatusConfirmado";
+            menuStatusConfirmado.Size = new Size(175, 26);
+            menuStatusConfirmado.Text = "Confirmado";
+            menuStatusConfirmado.Click += menuStatusConfirmado_Click;
+            // 
+            // menuStatusCancelado
+            // 
+            menuStatusCancelado = new ToolStripMenuItem();
+            menuStatusCancelado.Name = "menuStatusCancelado";
+            menuStatusCancelado.Size = new Size(175, 26);
+            menuStatusCancelado.Text = "Cancelado";
+            menuStatusCancelado.Click += menuStatusCancelado_Click;
+            // 
+            // menuStatusConcluido
+            // 
+            menuStatusConcluido = new ToolStripMenuItem();
+            menuStatusConcluido.Name = "menuStatusConcluido";
+            menuStatusConcluido.Size = new Size(175, 26);
+            menuStatusConcluido.Text = "Concluído";
+            menuStatusConcluido.Click += menuStatusConcluido_Click;
+            // 
+            // contextMenuStatus
+            // 
+            contextMenuStatus = new ContextMenuStrip(components);
+            contextMenuStatus.Items.AddRange(new ToolStripItem[] {
+                menuStatusAgendado,
+                menuStatusConfirmado,
+                menuStatusCancelado,
+                menuStatusConcluido
+            });
+            contextMenuStatus.Name = "contextMenuStatus";
+            contextMenuStatus.Size = new Size(176, 104);
+            contextMenuStatus.Opening += contextMenuStatus_Opening;
+            // 
+            // Associa o menu de contexto à lista de agendamentos
+            lstAgendaDia.ContextMenuStrip = contextMenuStatus;
+            // 
+            // Form1
+            // 
+            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1416, 748);
+            Controls.Add(lstAgendaDia);
+            Controls.Add(btnFiltrar);
+            Controls.Add(dtpFiltroAgenda);
+            Controls.Add(label7);
+            Controls.Add(btnAgendar);
+            Controls.Add(dtpDataHora);
+            Controls.Add(label6);
+            Controls.Add(cmbServicos);
+            Controls.Add(label5);
+            Controls.Add(label4);
+            Controls.Add(lstServicos);
+            Controls.Add(cmbClientes);
+            Controls.Add(txtPrecoServico);
+            Controls.Add(txtNomeServico);
+            Controls.Add(label3);
+            Controls.Add(label2);
+            Controls.Add(btnSalvarServico);
+            Controls.Add(lstClientes);
+            Controls.Add(btnSalvarCliente);
+            Controls.Add(Telefone);
+            Controls.Add(txtTelefoneCliente);
+            Controls.Add(txtNomeCliente);
+            Controls.Add(label1);
+            Name = "Form1";
+            Text = "Agenda de Atendimentos";
+            ResumeLayout(false);
+            PerformLayout();
+        }
+
+        #endregion
+
+        private Label label1;
+        private TextBox txtNomeCliente;
+        private TextBox txtTelefoneCliente;
+        private Label Telefone;
+        private Button btnSalvarCliente;
+        private ListBox lstClientes;
+        private Button btnSalvarServico;
+        private Label label2;
+        private Label label3;
+        private TextBox txtNomeServico;
+        private TextBox txtPrecoServico;
+        private ComboBox cmbClientes;
+        private ListBox lstServicos;
+        private Label label4;
+        private Label label5;
+        private ComboBox cmbServicos;
+        private Label label6;
+        private DateTimePicker dtpDataHora;
+        private Button btnAgendar;
+        private Label label7;
+        private DateTimePicker dtpFiltroAgenda;
+        private Button btnFiltrar;
+        private ListBox lstAgendaDia;
+        private ContextMenuStrip contextMenuStatus;
+        private ToolStripMenuItem menuStatusAgendado;
+        private ToolStripMenuItem menuStatusConfirmado;
+        private ToolStripMenuItem menuStatusCancelado;
+        private ToolStripMenuItem menuStatusConcluido;
+    }
+}
+</file>
+
+<file path="Form1.resx">
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+</root>
+</file>
+
+<file path="Models/Agendamento.cs">
+namespace AgendaAtendimentos.Models;
+
+public class Agendamento
+{
+    public int Id { get; set; }
+    public Cliente Cliente { get; set; } = null!;
+    public Servico Servico { get; set; } = null!;
+    public DateTime DataHora { get; set; }
+    public StatusAgendamento Status { get; private set; } = StatusAgendamento.Agendado;
+
+    public void AlterarStatus(StatusAgendamento novoStatus)
+    {
+        Status = novoStatus;
+    }
+
+    public override string ToString()
+    {
+        return $"{DataHora:HH:mm} - {Cliente.Nome} | {Servico.Nome} [{Status}]";
+    }
+}
+</file>
+
+<file path="Models/Cliente.cs">
+namespace AgendaAtendimentos.Models;
+
+public class Cliente
+{
+    public int Id { get; set; }
+    public string Nome { get; set; } = string.Empty;
+    public string Telefone { get; set; } = string.Empty;
+
+    public override string ToString()
+    {
+        return $"{Nome} ({Telefone})";
+    }
+}
+</file>
+
+<file path="Models/Servico.cs">
+namespace AgendaAtendimentos.Models;
+
+public class Servico
+{
+    public int Id { get; set; }
+    public string Nome { get; set; } = string.Empty;
+    public decimal Preco { get; set; }
+
+    public override string ToString()
+    {
+        return $"{Nome} - R$ {Preco:F2}";
+    }
+}
+</file>
+
+<file path="Models/StatusAgendamento.cs">
+namespace AgendaAtendimentos.Models;
+
+public enum StatusAgendamento
+{
+    Agendado,
+    Confirmado,
+    Cancelado,
+    Concluido
+}
+</file>
+
+<file path="Program.cs">
+namespace AgendaAtendimentos
+{
+    /// Classe principal da aplicacao
+    internal static class Program
+    {
+        /// Ponto de entrada principal da aplicacao
+        [STAThread]
+        static void Main()
+        {
+         /// Habilita estilos visuais 
+            ApplicationConfiguration.Initialize();
+         /// Inicia o formulário principal da agenda
+            Application.Run(new Form1());
+        }
+    }
+}
+</file>
+
+<file path="reference/briefing-agenda-atendimentos.md">
+# Projeto — Agenda de Atendimentos
+
+## Contexto
+
+Uma pequena prestadora de serviços — barbearia, salão, clínica estética, consultório — precisa de um sistema para organizar seus atendimentos. Hoje tudo é feito no papel ou em anotações no celular, e os horários se perdem, os clientes esquecem, e o profissional não sabe o que tem no dia.
+
+Você vai construir um sistema desktop para resolver esse problema.
+
+---
+
+## O sistema
+
+Um gerenciador de agenda que permite cadastrar clientes, cadastrar os serviços oferecidos, agendar atendimentos e visualizar o que tem no dia.
+
+---
+
+## Requisitos
+
+### Clientes
+- Cadastrar um novo cliente com nome e telefone
+- Listar todos os clientes cadastrados
+
+### Serviços
+- Cadastrar um novo serviço com nome e preço
+- Listar todos os serviços cadastrados
+
+### Agendamentos
+- Criar um novo agendamento informando: cliente, serviço, data e horário
+- Listar os agendamentos de um dia específico
+- Cada agendamento nasce com o status **Agendado**
+
+---
+
+## Classes mínimas esperadas
+
+Você deve ter ao menos estas três classes no seu projeto, cada uma com suas responsabilidades bem definidas:
+
+`Cliente` — representa um cliente do estabelecimento
+
+`Servico` — representa um serviço oferecido
+
+`Agendamento` — representa um atendimento marcado, ligando cliente e serviço a uma data e horário
+
+---
+
+## Critérios de aceite
+
+O projeto será avaliado com base nos seguintes pontos:
+
+- [ ] É possível cadastrar um cliente e vê-lo na listagem
+- [ ] É possível cadastrar um serviço e vê-lo na listagem
+- [ ] É possível criar um agendamento com cliente, serviço, data e horário
+- [ ] A agenda do dia exibe os agendamentos daquela data
+- [ ] As classes têm responsabilidades claras e separadas
+- [ ] O projeto roda sem erros
+
+---
+
+## Regras gerais
+
+- O projeto é individual
+- Use C# com Windows Forms
+- Suba o código no GitHub desde o primeiro dia — commit a cada avanço significativo
+- Não é necessário salvar os dados em arquivo — os dados podem existir apenas enquanto o programa estiver aberto
+- A interface não precisa ser bonita, precisa funcionar
+</file>
+
+<file path="reference/README-exemplo.md">
+<!--
+  Este é o modelo de README do projeto.
+  Preencha cada seção substituindo os trechos entre colchetes [ ... ].
+  Apague estes comentários e as instruções em itálico antes de entregar.
+  Um bom README permite que qualquer pessoa rode seu projeto sem te perguntar nada.
+-->
+
+# [Nome do Sistema]
+
+[Uma frase explicando o que o sistema faz. Ex: "Sistema de gestão de chamados de suporte técnico com controle de acesso por papéis."]
+
+---
+
+## Sobre o projeto
+
+[Um parágrafo curto descrevendo o domínio e o propósito do sistema. Para quem serve, que problema resolve.]
+
+**Domínio:** [Ex: Gestão de Chamados]
+**Dupla:** [Nome 1] e [Nome 2]
+
+---
+
+## Funcionalidades
+
+- [ ] Cadastro, listagem, edição e exclusão de [entidade principal]
+- [ ] Login com autenticação
+- [ ] Controle de acesso por papéis (Visualizador, Operador, Admin)
+- [ ] Senhas protegidas com BCrypt
+- [ ] Persistência de dados em banco SQLite
+
+[Adicione ou ajuste conforme o seu sistema.]
+
+---
+
+## Papéis de acesso
+
+| Papel | O que pode fazer |
+|-------|-----------------|
+| Visualizador | [O que esse papel vê/faz no seu sistema] |
+| Operador | [O que esse papel vê/faz no seu sistema] |
+| Admin | [O que esse papel vê/faz no seu sistema] |
+
+---
+
+## Tecnologias usadas
+
+- **Linguagem:** C#
+- **Interface:** Windows Forms (.NET 8)
+- **Banco de dados:** SQLite
+- **Segurança:** BCrypt.Net-Next (hashing de senhas)
+
+---
+
+## Como rodar o projeto
+
+### Pré-requisitos
+
+- [Ex: Visual Studio 2022 com a carga "Desenvolvimento para Desktop com .NET"]
+- [Ex: .NET 8 SDK]
+
+### Passos
+
+1. Clone o repositório:
+   ```
+   git clone [URL do seu repositório]
+   ```
+2. Abra o arquivo `[NomeDoProjeto].sln` no Visual Studio
+3. Restaure os pacotes NuGet (o Visual Studio faz isso automaticamente ao abrir)
+4. Rode com **F5**
+
+> O banco de dados é criado automaticamente na primeira execução, junto com um usuário administrador inicial.
+
+---
+
+## Acesso inicial
+
+Na primeira vez que o sistema roda, é criado um usuário administrador:
+
+- **Login:** [ex: admin]
+- **Senha:** [ex: admin123]
+
+[Recomende trocar ou cadastrar novos usuários após o primeiro acesso.]
+
+---
+
+## Estrutura do projeto
+
+```
+[NomeDoProjeto]/
+├── Models/        → classes de domínio
+├── Data/          → conexão e criação do banco
+├── Repositories/  → acesso ao banco (SQL)
+├── Services/      → regras de negócio e autorização
+├── Forms/         → telas do sistema
+└── Program.cs     → ponto de entrada
+```
+
+---
+
+## Instalação (versão .exe)
+
+[Se você gerou o instalador com Inno Setup, explique aqui como instalar.]
+
+1. Baixe o arquivo `[NomeDoInstalador].exe` na seção [Releases / pasta do projeto]
+2. Execute o instalador e siga os passos
+3. Abra o sistema pelo atalho criado
+
+---
+
+## Autores
+
+- [Nome 1] — [GitHub ou contato]
+- [Nome 2] — [GitHub ou contato]
+</file>
+
+<file path="Services/AgendaService.cs">
+using AgendaAtendimentos.Models;
+
+namespace AgendaAtendimentos.Services;
+
+public class AgendaService
+{
+    private List<Cliente> _clientes = new();
+    private List<Servico> _servicos = new();
+    private List<Agendamento> _agendamentos = new();
+    private int _nextClienteId = 1;
+    private int _nextServicoId = 1;
+    private int _nextAgendamentoId = 1;
+
+    public IReadOnlyList<Cliente> Clientes => _clientes;
+    public IReadOnlyList<Servico> Servicos => _servicos;
+    public IReadOnlyList<Agendamento> Agendamentos => _agendamentos;
+
+    public Cliente AdicionarCliente(string nome, string telefone)
+    {
+        var cliente = new Cliente
+        {
+            Id = _nextClienteId++,
+            Nome = nome,
+            Telefone = telefone
+        };
+        _clientes.Add(cliente);
+        return cliente;
+    }
+
+    public Servico AdicionarServico(string nome, decimal preco)
+    {
+        var servico = new Servico
+        {
+            Id = _nextServicoId++,
+            Nome = nome,
+            Preco = preco
+        };
+        _servicos.Add(servico);
+        return servico;
+    }
+
+    public Agendamento Agendar(Cliente cliente, Servico servico, DateTime dataHora)
+    {
+        var agendamento = new Agendamento
+        {
+            Id = _nextAgendamentoId++,
+            Cliente = cliente,
+            Servico = servico,
+            DataHora = dataHora
+        };
+        _agendamentos.Add(agendamento);
+        return agendamento;
+    }
+
+    public List<Agendamento> FiltrarPorData(DateTime data)
+    {
+        return _agendamentos
+            .Where(a => a.DataHora.Date == data.Date)
+            .OrderBy(a => a.DataHora)
+            .ToList();
+    }
+
+    public bool AlterarStatusAgendamento(int agendamentoId, StatusAgendamento novoStatus)
+    {
+        var agendamento = _agendamentos.FirstOrDefault(a => a.Id == agendamentoId);
+        if (agendamento == null)
+            return false;
+
+        agendamento.AlterarStatus(novoStatus);
+        return true;
+    }
+}
+</file>
+
+</files>

@@ -1,19 +1,15 @@
 namespace AgendaAtendimentos
 {
-    /// <summary>
-    /// Classe principal que inicia a aplicação.
-    /// </summary>
+    /// Classe principal da aplicacao
     internal static class Program
     {
-        /// <summary>
-        /// Ponto de entrada principal da aplicação.
-        /// </summary>
+        /// Ponto de entrada principal da aplicacao
         [STAThread]
         static void Main()
         {
-            // Habilita estilos visuais modernos e configurações de DPI
+         /// Habilita estilos visuais 
             ApplicationConfiguration.Initialize();
-            // Inicia o formulário principal da agenda
+         /// Inicia o formulário principal da agenda
             Application.Run(new Form1());
         }
     }
